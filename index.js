@@ -44,7 +44,7 @@ module.exports = function(options) {
   });
 
   function fullName(name) {
-    return name.replace('\\', '/');
+    return name.replace(/\\/g, '/');
   }
 
   function normalName(name) {
