@@ -3,51 +3,69 @@
  * gulp-ng-template
  * https://github.com/teambition/gulp-ejs-template
  *
- * Copyright (c) 2014 Yan Qing
+ * Copyright (c) 2014 Vladimir Skripkin
  * Licensed under the MIT license.
  */
-var fs = require('fs');
-var util = require('util');
-var path = require('path');
-var gutil = require('gulp-util');
-var through = require('through2');
-var ejs = require('./lib/ejs');
-var packageName = require('./package.json').name;
-var templatesTpl = fs.readFileSync(path.join(__dirname,'./lib/templates.js'), {encoding: 'utf8'});
 
-module.exports = function(options) {
-  options = options || {};
+var fs = require('fs'),
+	util = require('util'),
+	path = require('path'),
+	Vinyl = require('vinyl'),
+	PluginError = require('plugin-error'),
+	through = require('through2');
 
-  var joinedContent = '';
-  var moduleName = options.moduleName || 'templates';
-  var templates = templatesTpl.replace('moduleName', moduleName);
-  var contentTpl = 'templates[\'%s\']  = templates[\'%s\'] = %s;\n\n';
-  var joinedFile = new gutil.File({
-    cwd: __dirname,
-    base: __dirname,
-    path: path.join(__dirname, moduleName + '.js')
-  });
+var ejs = require('./lib/ejs'),
+	sPackageName = require('./package.json').name,
+	sTemplatesTpl = fs.readFileSync(path.join(__dirname,'./lib/templates.js'), {encoding: 'utf8'});
 
-  return through.obj(function(file, encoding, next) {
-    if (file.isNull()) return next();
-    if (file.isStream()) return this.emit('error', new gutil.PluginError(packageName,  'Streaming not supported'));
 
-    var name = path.relative(file.base, file.path);
-    var tpl = new ejs(file.contents.toString('utf8'), options.delimiter);
-    joinedContent += util.format(contentTpl, normalName(name), fullName(name), tpl.compile());
-    next();
-  }, function() {
-    joinedContent = joinedContent.trim().replace(/^/gm, '  ');
-    joinedFile.contents = new Buffer(templates.replace('/*PLACEHOLDER*/', joinedContent));
-    this.push(joinedFile);
-    this.push(null);
-  });
+module.exports = function (_options)
+{
+	_options = _options || {};
 
-  function fullName(name) {
-    return name.replace(/\\/g, '/');
-  }
+	var sJoinedContent = '',
+		sModuleName = _options.sModuleName || 'templates',
+		sTemplates = sTemplatesTpl.replace('moduleName', sModuleName),
+		sContentTpl = 'templates[\'%s\'] = templates[\'%s\'] = %s;\n\n',
+		oJoinedFile = new Vinyl({
+			cwd: __dirname,
+			base: __dirname,
+			path: path.join(__dirname, sModuleName + '.js')
+		});
 
-  function normalName(name) {
-    return fullName(name).replace(path.extname(name), '');
-  }
+	return through.obj(function (_oFile, _sEncoding, _next)
+	{
+		if (_oFile.isNull())
+		{
+			return _next();
+		}
+		if (_oFile.isStream())
+		{
+			return this.emit('error', new PluginError(sPackageName, 'Streaming not supported'));
+		}
+
+		var sName = path.relative(_oFile.base, _oFile.path),
+			sTpl = ejs.compile(_oFile.contents.toString('utf8'), _options);
+
+		sJoinedContent += util.format(sContentTpl, normalName(sName), fullName(sName), sTpl);
+		_next();
+	},
+	function ()
+	{
+		sJoinedContent = sJoinedContent.trim().replace(/^/gm, '  ');
+		oJoinedFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', sJoinedContent));
+
+		this.push(oJoinedFile);
+		this.push(null);
+	});
+
+	function fullName (name)
+	{
+		return name.replace(/\\/g, '/');
+	}
+
+	function normalName (name)
+	{
+		return fullName(name).replace(path.extname(name), '');
+	}
 };
