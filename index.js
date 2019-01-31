@@ -1,18 +1,19 @@
 'use strict';
+
 /*
- * gulp-ng-template
- * https://github.com/teambition/gulp-ejs-template
+ * https://github.com/vskripkin/gulp-ejs-template
  *
- * Copyright (c) 2014 Vladimir Skripkin
+ * Copyright (c) 2019 Vladimir Skripkin
  * Licensed under the MIT license.
  */
+
 
 var fs = require('fs'),
 	util = require('util'),
 	path = require('path'),
+	through = require('through2'),
 	Vinyl = require('vinyl'),
-	PluginError = require('plugin-error'),
-	through = require('through2');
+	PluginError = require('plugin-error');
 
 var ejs = require('./lib/ejs'),
 	sPackageName = require('./package.json').name,
@@ -24,9 +25,9 @@ module.exports = function (_options)
 	_options = _options || {};
 
 	var sJoinedContent = '',
-		sModuleName = _options.sModuleName || 'templates',
-		sTemplates = sTemplatesTpl.replace('moduleName', sModuleName),
-		sContentTpl = 'templates[\'%s\'] = templates[\'%s\'] = %s;\n\n',
+		sModuleName = _options.moduleName || 'templates',
+		sTemplates = sTemplatesTpl.replace('/*MODULENAME*/', sModuleName),
+		sContentTpl = 'templates[\'%s\'] = %s;\n\n',
 		oJoinedFile = new Vinyl({
 			cwd: __dirname,
 			base: __dirname,
@@ -47,25 +48,27 @@ module.exports = function (_options)
 		var sName = path.relative(_oFile.base, _oFile.path),
 			sTpl = ejs.compile(_oFile.contents.toString('utf8'), _options);
 
-		sJoinedContent += util.format(sContentTpl, normalName(sName), fullName(sName), sTpl);
+		sJoinedContent += util.format(sContentTpl, template_name(sTpl, sName), sTpl);
 		_next();
 	},
 	function ()
 	{
-		sJoinedContent = sJoinedContent.trim().replace(/^/gm, '  ');
+		sJoinedContent = sJoinedContent.trim().replace(/^/gm, '\t');
 		oJoinedFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', sJoinedContent));
 
 		this.push(oJoinedFile);
 		this.push(null);
 	});
 
-	function fullName (name)
+	function template_name (_sTpl, _sName)
 	{
-		return name.replace(/\\/g, '/');
-	}
+		var aMatch = /^\/\* ([a-zA-Z0-9_-]+) \*\/ /.exec(_sTpl);
 
-	function normalName (name)
-	{
-		return fullName(name).replace(path.extname(name), '');
+		if (aMatch)
+		{
+			return aMatch[1];
+		}
+
+		return _sName.replace(/\\/g, '/').replace(path.extname(_sName), '');
 	}
 };
