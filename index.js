@@ -24,7 +24,7 @@ module.exports = function (_options)
 {
 	_options = _options || {};
 
-	var sModuleName = _options.moduleName || 'templates',
+	var sModuleName = _options['module-name'] || _options.moduleName || 'templates',
 		sTemplates = sTemplatesTpl.replace('/*MODULENAME*/', sModuleName),
 		sContentTpl = 'templates[\'%s\'] = %s;\n\n';
 
@@ -69,7 +69,7 @@ module.exports = function (_options)
 	}
 
 
-	var sFileName = _options.fileName || sModuleName,
+	var sFileName = _options['file-name'] || sModuleName,
 		sJoinedContent = '',
 		oJoinedFile = new Vinyl({
 			cwd: __dirname,
