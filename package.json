@@ -1,7 +1,7 @@
 {
 	"name": "gulp-ejs-templates",
 	"description": "Precompile EJS templates to a JS file.",
-	"version": "1.1.4",
+	"version": "1.1.5",
 	"main": "index.js",
 	"homepage": "https://github.com/vskripkin/gulp-ejs-template",
 	"author": [
