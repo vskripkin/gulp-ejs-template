@@ -60,7 +60,8 @@ module.exports = function (_options)
 			})
 			.trim().replace(/^/gm, '\t');
 
-			_oFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', sContent));
+			// use function as second param for replace method to avoid replacing of '$n' and '$&' in content
+			_oFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', function () { return sContent; }));
 			_oFile.path = path.join(__dirname, _oFile.stem + '.js');
 
 			this.push(_oFile);
@@ -97,7 +98,8 @@ module.exports = function (_options)
 	function ()
 	{
 		sJoinedContent = sJoinedContent.trim().replace(/^/gm, '\t');
-		oJoinedFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', sJoinedContent));
+		// use function as second param for replace method to avoid replacing of '$n' and '$&' in content
+		oJoinedFile.contents = new Buffer(sTemplates.replace('/*PLACEHOLDER*/', function () { return sJoinedContent; }));
 
 		this.push(oJoinedFile);
 		this.push(null);
